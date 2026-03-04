@@ -3,24 +3,50 @@ import mongoose from "mongoose";
 import noteSchema from "@/models/noteSchema";
 import imageSchema from "@/models/imageSchema";
 import connectDB from "@/lib/mongoose";
+import cloudinary from "@/lib/cloudinary";
 
 export async function POST(req) {
 
   try {
-    
+
     await connectDB();
-    const {title, note, image,userId } = await req.json();
+
+    const formData = await req.formData();
+
+    const title = formData.get("title");
+    const note = formData.get("note");
+    const userId = formData.get("userId");
+
+    const images = formData.getAll("images");
+
+    // 1️⃣ Create note
     const newNote = await noteSchema.create({
       title,
       note,
-      userId:userId
+      userId
     });
 
-    // 2️⃣ If image exists → Save Image
-    if (image) {
+    // 2️⃣ Upload images to Cloudinary
+    for (const file of images) {
 
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const uploadResult = await new Promise((resolve, reject) => {
+
+        cloudinary.uploader.upload_stream(
+          { folder: "notes_app" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(buffer);
+
+      });
+
+      // 3️⃣ Save image URL in DB
       await imageSchema.create({
-        imageBase: image,
+        imageBase: uploadResult.secure_url,
         userId,
         noteId: newNote._id
       });
@@ -29,53 +55,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       success: true,
-      message: "Note created"
-    });
-
-  } catch (error) {
-    console.log(error)
-
-    return NextResponse.json({
-      success: false,
-      message: "Server error"
-    });
-
-  }
-
-}
-
-
-export async function GET(req) {
-
-  try {
-
-    await connectDB();
-
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-
-    const notes = await noteSchema.aggregate([
-
-      {
-        $match: {
-          userId: new mongoose.Types.ObjectId(userId)
-        }
-      },
-
-      {
-        $lookup: {
-          from: "images",        // collection name
-          localField: "_id",     // Note._id
-          foreignField: "noteId",// Image.noteId
-          as: "images"
-        }
-      }
-
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      notes
+      message: "Note created successfully"
     });
 
   } catch (error) {
@@ -88,5 +68,102 @@ export async function GET(req) {
     });
 
   }
+
+}
+
+export async function GET(req) {
+
+  try {
+
+    await connectDB();
+
+    const { searchParams } = new URL(req.url);
+
+    const userId = searchParams.get("userId");
+    const id = searchParams.get("id");
+
+    // 1️⃣ Get single note
+    if (id) {
+
+      const note = await noteSchema.aggregate([
+        {
+          $match: {
+            _id: new mongoose.Types.ObjectId(id)
+          }
+        },
+        {
+          $lookup: {
+            from: "images",
+            localField: "_id",
+            foreignField: "noteId",
+            as: "images"
+          }
+        }
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        note: note[0]
+      });
+
+    }
+
+    // 2️⃣ Get all notes for user
+    if (userId) {
+
+      const notes = await noteSchema.aggregate([
+        {
+          $match: {
+            userId: new mongoose.Types.ObjectId(userId)
+          }
+        },
+        {
+          $lookup: {
+            from: "images",
+            localField: "_id",
+            foreignField: "noteId",
+            as: "images"
+          }
+        }
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        notes
+      });
+
+    }
+
+    return NextResponse.json({
+      success: false,
+      message: "Missing parameters"
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    return NextResponse.json({
+      success: false,
+      message: "Server error"
+    });
+
+  }
+
+}
+
+export async function PUT(req) {
+
+  const body = await req.json();
+  const { id, title, text } = body;
+
+  await noteSchema.findByIdAndUpdate(id, {
+    title,
+   note: text,
+  });
+
+  return Response.json({  
+    success: true
+  });
 
 }

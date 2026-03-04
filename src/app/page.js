@@ -13,13 +13,15 @@ export default function Home() {
     if (user === null) {
       router.replace("/auth");
     }
+    if (user) {
+      fetchNotes();
+    }
   }, [user, router]);
 
   if (!user) return null;
 
 
   const [notes, setNotes] = useState([]);
-  useEffect(() => {
 
     const fetchNotes = async () => {
 
@@ -39,11 +41,8 @@ export default function Home() {
 
     };
 
-    if (user) {
-      fetchNotes();
-    }
+   
 
-  }, [user]);
 
 
   return (
@@ -84,6 +83,7 @@ export default function Home() {
           {notes?.map((note) => (
             <div
               key={note?._id}
+              onClick={() => router.push(`/note/${note._id}`)}
               className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition"
             >
 
@@ -99,7 +99,7 @@ export default function Home() {
                 </h3>
 
                 <p className="text-gray-400 text-sm mt-2">
-                  {note.text}
+                  {note.note}
                 </p>
               </div>
 

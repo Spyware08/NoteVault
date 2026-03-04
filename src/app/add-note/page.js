@@ -7,175 +7,164 @@ import { useSelector } from "react-redux";
 
 export default function AddNote() {
 
-    const user = useSelector((state) => state.user.user);
-    const router = useRouter();
+  const user = useSelector((state) => state.user.user);
+  const router = useRouter();
 
-    const [form, setForm] = useState({
-        title: "",
-        text: "",
+  const [form, setForm] = useState({
+    title: "",
+    text: "",
+  });
+
+  const [images, setImages] = useState([null]);
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
     });
+  };
 
-    const [image, setImage] = useState(null);
+  // Handle individual image change
+  const handleImageChange = (index, file) => {
+    const updatedImages = [...images];
+    updatedImages[index] = file;
+    setImages(updatedImages);
+  };
 
-    const handleChange = (e) => {
-        setForm({
-            ...form,
-            [e.target.name]: e.target.value
-        });
-    };
+  // Add new image input
+  const addImageField = () => {
+    setImages([...images, null]);
+  };
 
-    const handleImage = (e) => {
-        const file = e.target.files[0];
-        setImage(file);
-    };
+  // Remove image input
+  const removeImageField = (index) => {
+    const updatedImages = images.filter((_, i) => i !== index);
+    setImages(updatedImages);
+  };
 
-    // convert image → base64
-    const convertToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
+  const handleSubmit = async (e) => {
 
-            const reader = new FileReader();
+    e.preventDefault();
 
-            reader.readAsDataURL(file);
+    try {
 
-            reader.onload = () => {
-                resolve(reader.result);
-            };
+      const loadingToast = toast.loading("Uploading...");
 
-            reader.onerror = (error) => {
-                reject(error);
-            };
+      const formData = new FormData();
 
-        });
-    };
+      formData.append("title", form.title);
+      formData.append("note", form.text);
+      formData.append("userId", user?.id);
 
-    const handleSubmit = async (e) => {
-
-        e.preventDefault();
-
-        try {
-
-            const loadingToast = toast.loading("Please wait...");
-
-            let imageBase = null;
-
-            if (image) {
-                imageBase = await convertToBase64(image);
-            }
-
-            const res = await fetch("/api/noteSchema", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    title: form.title,
-                    note: form.text,
-                    userId: user?.id,
-                    image: imageBase
-                }),
-            });
-
-            const data = await res.json();
-
-            toast.dismiss(loadingToast);
-
-            if (data.success) {
-                toast.success("Note added successfully");
-                router.push("/");
-            } else {
-                toast.error("Failed to add note");
-            }
-
-        } catch (err) {
-            console.log(err);
-            toast.error("Something went wrong");
+      images.forEach((img) => {
+        if (img) {
+          formData.append("images", img);
         }
+      });
 
-    };
+      const res = await fetch("/api/noteSchema", {
+        method: "POST",
+        body: formData
+      });
 
-    return (
-        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+      const data = await res.json();
 
-            <div className="bg-gray-800 w-full max-w-lg p-8 rounded-xl shadow-lg">
+      toast.dismiss(loadingToast);
 
-                <h1 className="text-2xl font-bold mb-6">
-                    Add New Note
-                </h1>
+      if (data.success) {
+        toast.success("Note added successfully");
+        router.push("/");
+      } else {
+        toast.error("Failed to add note");
+      }
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+    } catch (err) {
+      console.log(err);
+      toast.error("Something went wrong");
+    }
 
-                    {/* Title */}
-                    <div>
-                        <label className="block mb-2 text-sm text-gray-300">
-                            Title
-                        </label>
+  };
 
-                        <input
-                            type="text"
-                            name="title"
-                            value={form.title}
-                            onChange={handleChange}
-                            required
-                            className="w-full p-3 rounded-lg bg-gray-700 outline-none"
-                            placeholder="Enter note title"
-                        />
-                    </div>
+  return (
+    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
 
-                    {/* Note */}
-                    <div>
-                        <label className="block mb-2 text-sm text-gray-300">
-                            Note
-                        </label>
+      <div className="bg-gray-800 w-full max-w-lg p-8 rounded-xl shadow-lg">
 
-                        <textarea
-                            name="text"
-                            value={form.text}
-                            onChange={handleChange}
-                            rows="4"
-                            required
-                            className="w-full p-3 rounded-lg bg-gray-700 outline-none"
-                            placeholder="Write your note..."
-                        />
-                    </div>
+        <h1 className="text-2xl font-bold mb-6">
+          Add New Note
+        </h1>
 
-                    {/* Image */}
-                    <div>
-                        <label className="block mb-2 text-sm text-gray-300">
-                            Upload Image
-                        </label>
+        <form onSubmit={handleSubmit} className="space-y-5">
 
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImage}
-                            className="w-full text-sm text-gray-400"
-                        />
-                    </div>
+          <input
+            type="text"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Note title"
+            className="w-full p-3 bg-gray-700 rounded"
+          />
 
-                    {/* Buttons */}
-                    <div className="flex gap-4 pt-4">
+          <textarea
+            name="text"
+            value={form.text}
+            onChange={handleChange}
+            rows="4"
+            placeholder="Write your note"
+            className="w-full p-3 bg-gray-700 rounded"
+          />
 
-                        <button
-                            type="submit"
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 py-3 rounded-lg"
-                        >
-                            Save Note
-                        </button>
+          {/* Dynamic Image Inputs */}
+          <div className="space-y-3">
 
-                        <button
-                            type="button"
-                            onClick={() => router.push("/")}
-                            className="flex-1 bg-gray-600 hover:bg-gray-700 py-3 rounded-lg"
-                        >
-                            Cancel
-                        </button>
+            {images.map((img, index) => (
 
-                    </div>
+              <div key={index} className="flex gap-2 items-center">
 
-                </form>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    handleImageChange(index, e.target.files[0])
+                  }
+                  className="flex-1"
+                />
 
-            </div>
+                {images.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeImageField(index)}
+                    className="bg-red-500 px-3 py-1 rounded"
+                  >
+                    X
+                  </button>
+                )}
 
-        </div>
-    );
+              </div>
+
+            ))}
+
+            <button
+              type="button"
+              onClick={addImageField}
+              className="bg-green-600 px-4 py-2 rounded"
+            >
+              + Add Image
+            </button>
+
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 py-3 rounded-lg"
+          >
+            Save Note
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+  );
 }
