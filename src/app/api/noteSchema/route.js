@@ -47,6 +47,7 @@ export async function POST(req) {
       // 3️⃣ Save image URL in DB
       await imageSchema.create({
         imageBase: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
         userId,
         noteId: newNote._id
       });
@@ -154,16 +155,130 @@ export async function GET(req) {
 
 export async function PUT(req) {
 
-  const body = await req.json();
-  const { id, title, text } = body;
+  try {
 
-  await noteSchema.findByIdAndUpdate(id, {
-    title,
-   note: text,
-  });
+    await connectDB();
 
-  return Response.json({  
-    success: true
-  });
+    const formData = await req.formData();
+
+    const id = formData.get("id");
+    const title = formData.get("title");
+    const text = formData.get("text");
+
+    const deletedImages = formData.getAll("deletedImages");
+    const images = formData.getAll("images");
+
+    // update note
+    await noteSchema.findByIdAndUpdate(id, {
+      title,
+      note: text
+    });
+
+    // DELETE IMAGES FROM CLOUDINARY + DB
+    if (deletedImages.length > 0) {
+
+      const imagesToDelete = await imageSchema.find({
+        _id: { $in: deletedImages }
+      });
+
+      for (const img of imagesToDelete) {
+        await cloudinary.uploader.destroy(img.public_id);
+      }
+
+      await imageSchema.deleteMany({
+        _id: { $in: deletedImages }
+      });
+
+    }
+
+    // UPLOAD NEW IMAGES
+    for (const file of images) {
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const uploadResult = await new Promise((resolve, reject) => {
+
+        cloudinary.uploader.upload_stream(
+          { folder: "notes_app" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(buffer);
+
+      });
+
+      await imageSchema.create({
+        imageBase: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+        noteId: id
+      });
+
+    }
+
+    return NextResponse.json({
+      success: true
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    return NextResponse.json({
+      success: false
+    });
+
+  }
 
 }
+
+export async function DELETE(req) {
+
+  try {
+
+    await connectDB();
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    const images = await imageSchema.find({ noteId: id });
+
+    for (const img of images) {
+      await cloudinary.uploader.destroy(img.public_id);
+    }
+
+    await imageSchema.deleteMany({ noteId: id });
+    await noteSchema.findByIdAndDelete(id);
+
+    return NextResponse.json({
+      success: true
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    return NextResponse.json({
+      success: false
+    });
+
+  }
+
+}
+
+// export async function PUT(req) {
+
+//   const body = await req.json();
+//   const { id, title, text } = body;
+
+//   await noteSchema.findByIdAndUpdate(id, {
+//     title,
+//    note: text,
+//   });
+
+//   return Response.json({  
+//     success: true
+//   });
+
+// }

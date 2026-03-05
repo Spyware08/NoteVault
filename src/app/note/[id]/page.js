@@ -13,99 +13,250 @@ export default function NotePage() {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
 
+  const [existingImages, setExistingImages] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+  const [deletedImages, setDeletedImages] = useState([]);
+
+  const [previewImage, setPreviewImage] = useState(null);
+
   useEffect(() => {
     fetchNote();
   }, []);
 
   const fetchNote = async () => {
+
     const res = await fetch(`/api/noteSchema?id=${id}`);
     const data = await res.json();
 
-    console.log(data);
     if (data.success) {
-      setNote(data?.note);
-      setTitle(data?.note?.title);
-      setText(data?.note?.note);
+
+      setNote(data.note);
+      setTitle(data.note.title);
+      setText(data.note.note);
+      setExistingImages(data.note.images || []);
+
     }
+  };
+
+  // select images
+  const handleImageChange = (e) => {
+
+    const files = Array.from(e.target.files);
+    setNewImages((prev) => [...prev, ...files]);
+
+  };
+
+  // delete existing image
+  const deleteExistingImage = (imgId) => {
+
+    setExistingImages((prev) => prev.filter((img) => img._id !== imgId));
+    setDeletedImages((prev) => [...prev, imgId]);
+
+  };
+
+  // delete newly added image
+  const deleteNewImage = (index) => {
+
+    const updated = [...newImages];
+    updated.splice(index, 1);
+    setNewImages(updated);
+
   };
 
   const updateNote = async () => {
 
+    const formData = new FormData();
+
+    formData.append("id", id);
+    formData.append("title", title);
+    formData.append("text", text);
+
+    deletedImages.forEach((imgId) => {
+      formData.append("deletedImages", imgId);
+    });
+
+    newImages.forEach((file) => {
+      formData.append("images", file);
+    });
+
     const res = await fetch("/api/noteSchema", {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id,
-        title,
-        text,
-      }),
+      body: formData,
     });
 
     const data = await res.json();
 
     if (data.success) {
+
       setEditMode(false);
+      setNewImages([]);
+      setDeletedImages([]);
       fetchNote();
+
     }
   };
 
-  if (!note) return <div className="text-white p-10">Loading...</div>;
+  if (!note) {
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        Loading...
+      </div>
+    );
+
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-10">
+    <div className="min-h-screen bg-gray-900 text-white p-6">
 
-      <div className="max-w-2xl mx-auto bg-gray-800 p-6 rounded-xl">
+      <div className="max-w-4xl mx-auto bg-gray-800 rounded-xl shadow-lg p-8">
 
-        <img
-          src={note?.images[0]?.imageBase}
-          className="w-full h-60 object-cover rounded-lg mb-6"
-        />
-
+        {/* TITLE */}
         {editMode ? (
-          <>
-            <input
-              className="w-full p-2 bg-gray-700 rounded mb-4"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-
-            <textarea
-              className="w-full p-2 bg-gray-700 rounded mb-4"
-              rows={5}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
-
-            <button
-              onClick={updateNote}
-              className="bg-green-600 px-4 py-2 rounded"
-            >
-              Update
-            </button>
-          </>
+          <input
+            className="w-full p-3 bg-gray-700 rounded mb-4 text-lg"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         ) : (
-          <>
-            <h1 className="text-2xl font-bold mb-4">
-              {note.title}
-            </h1>
+          <h1 className="text-3xl font-bold mb-4">
+            {note.title}
+          </h1>
+        )}
 
-            <p className="text-gray-300 mb-6">
-              {note.note}
-            </p>
+        {/* TEXT */}
+        {editMode ? (
+          <textarea
+            className="w-full p-3 bg-gray-700 rounded mb-6"
+            rows={5}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        ) : (
+          <p className="text-gray-300 mb-6 leading-relaxed">
+            {note.note}
+          </p>
+        )}
 
+        {/* IMAGE UPLOAD */}
+        {editMode && (
+          <input
+            type="file"
+            multiple
+            onChange={handleImageChange}
+            className="mb-6"
+          />
+        )}
+
+        {/* EXISTING IMAGES */}
+        {existingImages.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+
+            {existingImages.map((img) => (
+
+              <div key={img._id} className="relative">
+
+                <img
+                  src={img.imageBase}
+                  onClick={() => setPreviewImage(img.imageBase)}
+                  className="w-full h-40 object-cover rounded-lg cursor-pointer"
+                />
+
+                {editMode && (
+                  <button
+                    onClick={() => deleteExistingImage(img._id)}
+                    className="absolute top-2 right-2 bg-red-600 px-2 rounded"
+                  >
+                    X
+                  </button>
+                )}
+
+              </div>
+
+            ))}
+
+          </div>
+        )}
+
+        {/* NEW IMAGES PREVIEW */}
+        {newImages.length > 0 && (
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+
+            {newImages.map((file, index) => (
+
+              <div key={index} className="relative">
+
+                <img
+                  src={URL.createObjectURL(file)}
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+
+                <button
+                  onClick={() => deleteNewImage(index)}
+                  className="absolute top-2 right-2 bg-red-600 px-2 rounded"
+                >
+                  X
+                </button>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+
+        {/* BUTTONS */}
+        <div className="flex gap-4">
+
+          {editMode ? (
+            <>
+              <button
+                onClick={updateNote}
+                className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded"
+              >
+                Update
+              </button>
+
+              <button
+                onClick={() => setEditMode(false)}
+                className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
             <button
               onClick={() => setEditMode(true)}
-              className="bg-blue-600 px-4 py-2 rounded"
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
             >
-              Edit
+              Edit Note
             </button>
-          </>
-        )}
+          )}
+
+        </div>
 
       </div>
 
+      {/* IMAGE PREVIEW */}
+      {previewImage && (
+
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+        >
+
+          <img
+            src={previewImage}
+            className="max-h-[80%] max-w-[90%] rounded-lg"
+          />
+
+        </div>
+
+      )}
+
     </div>
   );
+
 }

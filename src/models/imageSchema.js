@@ -6,6 +6,10 @@ const ImageSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    public_id: {
+      type: String,
+      required: true
+    },
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
