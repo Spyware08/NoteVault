@@ -10,6 +10,10 @@ const NoteSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    privateNote: {
+      type: Boolean,
+      default: false
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

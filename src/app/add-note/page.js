@@ -15,14 +15,17 @@ export default function AddNote() {
   const [form, setForm] = useState({
     title: "",
     text: "",
+    privateNote: false
   });
 
   const [images, setImages] = useState([null]);
 
   const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
     setForm({
       ...form,
-      [e.target.name]: e.target.value
+      [name]: type === "checkbox" ? checked : value
     });
   };
 
@@ -53,6 +56,7 @@ export default function AddNote() {
 
       formData.append("title", form.title);
       formData.append("note", form.text);
+      formData.append("privateNote", form.privateNote);
       formData.append("userId", user?.id);
 
       images.forEach((img) => {
@@ -88,7 +92,6 @@ export default function AddNote() {
     <PageWrapper>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center p-6">
 
-        {/* CARD */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 w-full max-w-xl p-8 rounded-2xl shadow-2xl">
 
           {/* Header */}
@@ -105,6 +108,7 @@ export default function AddNote() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
 
+            {/* Title */}
             <input
               type="text"
               name="title"
@@ -114,6 +118,7 @@ export default function AddNote() {
               className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
             />
 
+            {/* Note */}
             <textarea
               name="text"
               value={form.text}
@@ -122,6 +127,21 @@ export default function AddNote() {
               placeholder="Write your note..."
               className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
             />
+
+            {/* Private Checkbox */}
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                name="privateNote"
+                checked={form.privateNote}
+                onChange={handleChange}
+                className="w-4 h-4 accent-blue-500"
+              />
+
+              <label className="text-sm text-gray-300">
+                Make this note private
+              </label>
+            </div>
 
             {/* Images */}
             <div className="space-y-3">
@@ -169,6 +189,7 @@ export default function AddNote() {
 
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-medium transition"

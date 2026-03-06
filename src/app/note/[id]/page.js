@@ -12,6 +12,7 @@ export default function NotePage() {
 
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
+  const [privateNote, setPrivateNote] = useState(false);
 
   const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
@@ -33,12 +34,12 @@ export default function NotePage() {
       setNote(data.note);
       setTitle(data.note.title);
       setText(data.note.note);
+      setPrivateNote(data.note.privateNote);
       setExistingImages(data.note.images || []);
 
     }
   };
 
-  // select images
   const handleImageChange = (e) => {
 
     const files = Array.from(e.target.files);
@@ -46,7 +47,6 @@ export default function NotePage() {
 
   };
 
-  // delete existing image
   const deleteExistingImage = (imgId) => {
 
     setExistingImages((prev) => prev.filter((img) => img._id !== imgId));
@@ -54,7 +54,6 @@ export default function NotePage() {
 
   };
 
-  // delete newly added image
   const deleteNewImage = (index) => {
 
     const updated = [...newImages];
@@ -70,6 +69,7 @@ export default function NotePage() {
     formData.append("id", id);
     formData.append("title", title);
     formData.append("text", text);
+    formData.append("privateNote", privateNote);
 
     deletedImages.forEach((imgId) => {
       formData.append("deletedImages", imgId);
@@ -138,6 +138,24 @@ export default function NotePage() {
           </p>
         )}
 
+        {/* PRIVATE CHECKBOX */}
+        {editMode && (
+          <div className="flex items-center gap-3 mb-6">
+
+            <input
+              type="checkbox"
+              checked={privateNote}
+              onChange={(e) => setPrivateNote(e.target.checked)}
+              className="w-4 h-4 accent-blue-500"
+            />
+
+            <label className="text-sm text-gray-300">
+              Make this note private
+            </label>
+
+          </div>
+        )}
+
         {/* IMAGE UPLOAD */}
         {editMode && (
           <input
@@ -178,7 +196,7 @@ export default function NotePage() {
           </div>
         )}
 
-        {/* NEW IMAGES PREVIEW */}
+        {/* NEW IMAGES */}
         {newImages.length > 0 && (
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
@@ -257,6 +275,7 @@ export default function NotePage() {
       )}
 
     </div>
+
   );
 
 }
