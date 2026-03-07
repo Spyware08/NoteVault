@@ -31,8 +31,12 @@ export default function Home() {
           >
 
             <div className="flex justify-center mb-6">
-              <div className="bg-blue-600 p-4 rounded-full shadow-lg">
-                <NotebookPen size={30} />
+              <div className="bg-blue-600 p-3 sm:p-4 md:p-5 rounded-full shadow-lg">
+                <img
+                  src="/icon.png"
+                  alt="NoteVault"
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
+                />
               </div>
             </div>
 
@@ -45,18 +49,17 @@ export default function Home() {
               in a beautiful and secure notes app.
             </p>
 
-            {/* CTA */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10 w-full sm:w-auto max-w-xs mx-auto sm:max-w-none">
 
-              <Link href="/auth/login">
-                <button className="flex items-center gap-2 px-8 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-lg">
+              <Link href="/auth/login" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-lg">
                   <LogIn size={18} />
                   Login
                 </button>
               </Link>
 
-              <Link href="/auth/signup">
-                <button className="flex items-center gap-2 px-8 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition shadow-lg">
+              <Link href="/auth/signup" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition shadow-lg">
                   <UserPlus size={18} />
                   Create Account
                 </button>

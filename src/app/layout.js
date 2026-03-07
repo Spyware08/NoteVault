@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import ReduxProvider from "@/redux/provider";
+import AuthLoader from "@/components/AuthLoader";
 
 
 import "./globals.css";
@@ -30,19 +31,20 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReduxProvider>
+          <AuthLoader>
 
-          {children}
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              style: {
-                background: "#1f2937",
-                color: "#fff",
-              },
-            }}
-          />
+            {children}
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                style: {
+                  background: "#1f2937",
+                  color: "#fff",
+                },
+              }}
+            />
+          </AuthLoader>
         </ReduxProvider>
-
       </body>
     </html>
   );

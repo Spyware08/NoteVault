@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -9,14 +9,19 @@ import {
   Image as ImageIcon,
   Lock,
   MoreVertical,
-  Trash2
+  Trash2,
+  LogOut
 } from "lucide-react";
 import { motion } from "framer-motion";
 import PageWrapper from "@/components/PageWrapper";
+import CircularProgress from "@mui/material/CircularProgress";
+import { setUser } from "@/redux/userSlice";
+
 
 export default function Home() {
 
   const router = useRouter();
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
 
   const [myNotes, setMyNotes] = useState([]);
@@ -25,22 +30,30 @@ export default function Home() {
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
 
     if (user === null) {
       router.replace("/auth");
+      return;
     }
 
+    const loadData = async () => {
+      await fetchMyNotes();
+      await fetchAllNotes();
+      setLoading(false);
+    };
+
     if (user) {
-      fetchMyNotes();
-      fetchAllNotes();
+      loadData();
     }
+
 
   }, [user]);
 
-  if (!user) return null;
-
   const fetchMyNotes = async () => {
+
 
     try {
 
@@ -55,9 +68,11 @@ export default function Home() {
       console.log(error);
     }
 
+
   };
 
   const fetchAllNotes = async () => {
+
 
     try {
 
@@ -72,9 +87,11 @@ export default function Home() {
       console.log(error);
     }
 
+
   };
 
   const deleteNote = async (id) => {
+
 
     try {
 
@@ -93,9 +110,29 @@ export default function Home() {
       console.log(error);
     }
 
+
   };
 
+  const handleLogout = () => {
+
+
+    document.cookie =
+      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    dispatch(setUser(null));
+
+    router.replace("/auth");
+
+  };
+
+  if (loading) {
+    return (<div className="flex items-center justify-center h-screen bg-black">
+      <CircularProgress size={50} thickness={4} sx={{ color: "white" }} /> </div>
+    );
+  }
+
   return (
+
 
     <PageWrapper>
 
@@ -115,161 +152,159 @@ export default function Home() {
             </p>
           </div>
 
-          <button
-            onClick={() => router.push("/add-note")}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl shadow-lg transition"
-          >
-            <Plus size={18} />
-            Add Note
-          </button>
+          <div className="flex items-center gap-4">
+
+            <button
+              onClick={() => router.push("/add-note")}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl shadow-lg transition"
+            >
+              <Plus size={18} />
+              Add Note
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-5 py-3 rounded-xl shadow-lg transition"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* STATS */}
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+
+          <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
+            <Notebook className="mb-3 text-blue-400" />
+            <h2 className="text-2xl font-bold">{myNotes.length}</h2>
+            <p className="text-gray-400">Total Notes</p>
+          </div>
+
+          <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
+            <ImageIcon className="mb-3 text-purple-400" />
+            <h2 className="text-2xl font-bold">
+              {myNotes.filter(n => n.images?.length > 0).length}
+            </h2>
+            <p className="text-gray-400">Notes With Images</p>
+          </div>
+
+          <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
+            <Lock className="mb-3 text-red-400" />
+            <h2 className="text-2xl font-bold">
+              {myNotes.filter(n => n.privateNote).length}
+            </h2>
+            <p className="text-gray-400">Private Notes</p>
+          </div>
 
         </div>
 
         {/* MY NOTES */}
 
-        <div>
+        <h2 className="text-2xl font-semibold mb-6">My Notes</h2>
 
-          <h2 className="text-2xl font-semibold mb-6">
-            My Notes
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-
-            <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
-              <Notebook className="mb-3 text-blue-400" />
-              <h2 className="text-2xl font-bold">{myNotes.length}</h2>
-              <p className="text-gray-400">Total Notes</p>
-            </div>
-
-            <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
-              <ImageIcon className="mb-3 text-purple-400" />
-              <h2 className="text-2xl font-bold">
-                {myNotes.filter(n => n.images?.length > 0).length}
-              </h2>
-              <p className="text-gray-400">Notes With Images</p>
-            </div>
-
-            <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
-              <Lock className="mb-3 text-red-400" />
-              <h2 className="text-2xl font-bold">
-                {myNotes.filter(n => n.privateNote).length}
-              </h2>
-              <p className="text-gray-400">Private Notes</p>
-            </div>
-
+        {myNotes.length === 0 && (
+          <div className="text-gray-400 mb-10">
+            No notes yet. Create your first one
           </div>
+        )}
 
-          {myNotes.length === 0 && (
-            <div className="text-gray-400">
-              No notes yet. Create your first one
-            </div>
-          )}
+        <div className="grid md:grid-cols-3 gap-8">
 
-          <div className="grid md:grid-cols-3 gap-8">
+          {myNotes.map((note, i) => (
 
-            {myNotes.map((note, i) => (
+            <motion.div
+              key={note._id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="group relative bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition cursor-pointer"
+            >
 
-              <motion.div
-                key={note._id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="group relative bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 hover:shadow-xl transition cursor-pointer"
-              >
+              {/* MENU */}
 
-                {/* THREE DOT BUTTON */}
+              <div className="absolute top-3 right-3 z-20">
 
-                <div className="absolute top-2 right-2 z-20  transition">
+                <div className="relative">
 
-                  <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpenId(menuOpenId === note._id ? null : note._id);
+                    }}
+                    className="p-1 bg-black/60 rounded"
+                  >
+                    <MoreVertical size={18} />
+                  </button>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuOpenId(menuOpenId === note._id ? null : note._id);
-                      }}
-                      className="p-1 bg-black/60 rounded"
-                    >
-                      <MoreVertical size={18} />
-                    </button>
+                  {menuOpenId === note._id && (
 
-                    {menuOpenId === note._id && (
+                    <div className="absolute right-0 mt-2 w-28 bg-gray-900 rounded shadow-lg border border-gray-700">
 
-                      <div className="absolute right-0 mt-2 w-28 bg-gray-900 rounded shadow-lg border border-gray-700">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteModal(note._id);
+                          setMenuOpenId(null);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-600 w-full"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteModal(note._id);
-                            setMenuOpenId(null);
-                          }}
-                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-600 w-full"
-                        >
-                          <Trash2 size={14} />
-                          Delete
-                        </button>
+                    </div>
 
-                      </div>
-
-                    )}
-
-                  </div>
+                  )}
 
                 </div>
 
-                {/* CLICK AREA */}
+              </div>
 
-                <div onClick={() => router.push(`/note/${note._id}`)}>
+              <div onClick={() => router.push(`/note/${note._id}`)}>
 
-                  <div className="w-full h-44 relative overflow-hidden">
+                <div className="w-full h-44 overflow-hidden">
 
-                    {note?.images?.length > 0 ? (
+                  {note?.images?.length > 0 ? (
 
-                      <img
-                        src={note.images[0].imageBase}
-                        alt="note"
-                        className="w-full h-full object-cover"
-                      />
+                    <img
+                      src={note.images[0].imageBase}
+                      className="w-full h-full object-cover"
+                    />
 
-                    ) : (
+                  ) : (
 
-                      <div className="w-full h-full bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 flex items-center justify-center">
+                    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                      <ImageIcon size={28} />
+                    </div>
 
-                        <div className="flex flex-col items-center text-gray-400">
-                          <ImageIcon size={28} />
-                          <span className="text-xs mt-2">
-                            No Image Uploaded yet.
-                          </span>
-                        </div>
-
-                      </div>
-
-                    )}
-
-                  </div>
-
-                  <div className="p-5">
-
-                    <h3 className="text-gray-300 font-semibold mb-2 flex items-center gap-2">
-                      Title: {note.title}
-                      {note.privateNote && (
-                        <Lock size={14} className="text-red-400" />
-                      )}
-                    </h3>
-
-                    <p className="ml-1 text-gray-400 text-sm line-clamp-3">
-                      {note.note}
-                    </p>
-
-                  </div>
+                  )}
 
                 </div>
 
-              </motion.div>
+                <div className="p-5">
 
-            ))}
+                  <h3 className="text-gray-300 font-semibold mb-2 flex items-center gap-2">
+                    {note.title}
+                    {note.privateNote && (
+                      <Lock size={14} className="text-red-400" />
+                    )}
+                  </h3>
 
-          </div>
+                  <p className="text-gray-400 text-sm line-clamp-3">
+                    {note.note}
+                  </p>
+
+                </div>
+
+              </div>
+
+            </motion.div>
+
+          ))}
 
         </div>
 
@@ -297,30 +332,22 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => router.push(`/public-note/${note._id}`)}
-                className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 hover:shadow-xl transition cursor-pointer"
+                className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition cursor-pointer"
               >
 
-                <div className="w-full h-44 relative overflow-hidden">
+                <div className="w-full h-44 overflow-hidden">
 
                   {note?.images?.length > 0 ? (
 
                     <img
                       src={note.images[0].imageBase}
-                      alt="note"
                       className="w-full h-full object-cover"
                     />
 
                   ) : (
 
-                    <div className="w-full h-full bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 flex items-center justify-center">
-
-                      <div className="flex flex-col items-center text-gray-400">
-                        <ImageIcon size={28} />
-                        <span className="text-xs mt-2">
-                          No Image Uploaded yet.
-                        </span>
-                      </div>
-
+                    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                      <ImageIcon size={28} />
                     </div>
 
                   )}
@@ -334,7 +361,7 @@ export default function Home() {
                   </h4>
 
                   <h3 className="text-gray-300 font-semibold mb-1">
-                    Title: {note.title}
+                    {note.title}
                   </h3>
 
                   <p className="text-gray-400 text-sm line-clamp-3">
@@ -366,7 +393,7 @@ export default function Home() {
             </h2>
 
             <p className="text-gray-400 text-sm mb-6">
-              Are you sure you want to delete this note? This action cannot be undone.
+              Are you sure you want to delete this note?
             </p>
 
             <div className="flex justify-end gap-3">
@@ -394,6 +421,7 @@ export default function Home() {
       )}
 
     </PageWrapper>
+
 
   );
 
