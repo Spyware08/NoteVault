@@ -32,25 +32,24 @@ export default function Home() {
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (user === null) {
-      router.replace("/auth");
-      return;
-    }
+  if (user === undefined) return; // wait for auth loader
 
-    const loadData = async () => {
-      await fetchMyNotes();
-      await fetchAllNotes();
-      setLoading(false);
-    };
+  if (user === null) {
+    router.replace("/auth");
+    return;
+  }
 
-    if (user) {
-      loadData();
-    }
+  const loadData = async () => {
+    await fetchMyNotes();
+    await fetchAllNotes();
+    setLoading(false);
+  };
 
+  loadData();
 
-  }, [user]);
+}, [user]);
 
   const fetchMyNotes = async () => {
 
