@@ -16,7 +16,7 @@ export default function Login() {
   const dispatch = useDispatch();
 
   const [form, setForm] = useState({
-    email: "a@a.com",
+    email: "Bruce@gmail.com",
     password: "1234",
   });
 
