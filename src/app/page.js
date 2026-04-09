@@ -1,0 +1,427 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import {
+  Plus,
+  Notebook,
+  Image as ImageIcon,
+  Lock,
+  MoreVertical,
+  Trash2,
+  LogOut
+} from "lucide-react";
+import { motion } from "framer-motion";
+import PageWrapper from "@/components/PageWrapper";
+import CircularProgress from "@mui/material/CircularProgress";
+import { setUser } from "@/redux/userSlice";
+
+
+export default function Home() {
+
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
+
+  const [myNotes, setMyNotes] = useState([]);
+  const [allNotes, setAllNotes] = useState([]);
+
+  const [menuOpenId, setMenuOpenId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+
+    if (user === undefined) return; // wait for auth loader
+
+    if (user === null) {
+      router.replace("/auth");
+      return;
+    }
+
+    const loadData = async () => {
+      await fetchMyNotes();
+      await fetchAllNotes();
+      setLoading(false);
+    };
+
+    loadData();
+
+  }, [user]);
+
+  const fetchMyNotes = async () => {
+
+
+    try {
+
+      const res = await fetch(`/api/noteSchema?userId=${user?.id}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setMyNotes(data.notes);
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
+
+
+  };
+
+  const fetchAllNotes = async () => {
+
+
+    try {
+
+      const res = await fetch(`/api/noteSchema?public=true`);
+      const data = await res.json();
+
+      if (data.success) {
+        setAllNotes(data.notes?.filter(i => i?.userId != user?.id));
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
+
+
+  };
+
+  const deleteNote = async (id) => {
+
+
+    try {
+
+      const res = await fetch(`/api/noteSchema?id=${id}`, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        fetchMyNotes();
+        setDeleteModal(null);
+      }
+
+    } catch (error) {
+      console.log(error);
+    }
+
+
+  };
+
+  const handleLogout = () => {
+
+
+    document.cookie =
+      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    dispatch(setUser(null));
+
+    router.replace("/auth");
+
+  };
+
+  if (loading) {
+    return (<div className="flex items-center justify-center h-screen bg-black">
+      <CircularProgress size={50} thickness={4} sx={{ color: "white" }} /> </div>
+    );
+  }
+
+  return (
+
+
+    <PageWrapper>
+
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white p-10">
+
+        {/* HEADER */}
+
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
+
+          {/* Left Section */}
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+              Welcome back, {user?.name}
+            </h1>
+
+            <p className="text-gray-400 mt-2 text-sm sm:text-base">
+              Capture your thoughts and ideas
+            </p>
+          </div>
+
+          {/* Right Section */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+
+            <button
+              onClick={() => router.push("/add-note")}
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl shadow-lg transition w-full sm:w-auto"
+            >
+              <Plus size={18} />
+              Add Note
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl shadow-lg transition w-full sm:w-auto"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+
+          </div>
+
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+
+          <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
+            <Notebook className="mb-3 text-blue-400" />
+            <h2 className="text-2xl font-bold">{myNotes.length}</h2>
+            <p className="text-gray-400">Total Notes</p>
+          </div>
+
+          <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
+            <ImageIcon className="mb-3 text-purple-400" />
+            <h2 className="text-2xl font-bold">
+              {myNotes.filter(n => n.images?.length > 0).length}
+            </h2>
+            <p className="text-gray-400">Notes With Images</p>
+          </div>
+
+          <div className="bg-gray-800/60 backdrop-blur p-6 rounded-xl">
+            <Lock className="mb-3 text-red-400" />
+            <h2 className="text-2xl font-bold">
+              {myNotes.filter(n => n.privateNote).length}
+            </h2>
+            <p className="text-gray-400">Private Notes</p>
+          </div>
+
+        </div>
+
+        {/* MY NOTES */}
+
+        <h2 className="text-2xl font-semibold mb-6">My Notes</h2>
+
+        {myNotes.length === 0 && (
+          <div className="text-gray-400 mb-10">
+            No notes yet. Create your first one
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-3 gap-8">
+
+          {myNotes.map((note, i) => (
+
+            <motion.div
+              key={note._id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="group relative bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition cursor-pointer"
+            >
+
+              {/* MENU */}
+
+              <div className="absolute top-3 right-3 z-20">
+
+                <div className="relative">
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpenId(menuOpenId === note._id ? null : note._id);
+                    }}
+                    className="p-1 bg-black/60 rounded"
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+
+                  {menuOpenId === note._id && (
+
+                    <div className="absolute right-0 mt-2 w-28 bg-gray-900 rounded shadow-lg border border-gray-700">
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteModal(note._id);
+                          setMenuOpenId(null);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-red-600 w-full"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              </div>
+
+              <div onClick={() => router.push(`/note/${note._id}`)}>
+
+                <div className="w-full h-44 overflow-hidden">
+
+                  {note?.images?.length > 0 ? (
+
+                    <img
+                      src={note.images[0].imageBase}
+                      className="w-full h-full object-cover"
+                    />
+
+                  ) : (
+
+                    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                      <ImageIcon size={28} />
+                    </div>
+
+                  )}
+
+                </div>
+
+                <div className="p-5">
+
+                  <h3 className="text-gray-300 font-semibold mb-2 flex items-center gap-2">
+                    {note.title}
+                    {note.privateNote && (
+                      <Lock size={14} className="text-red-400" />
+                    )}
+                  </h3>
+
+                  <p className="text-gray-400 text-sm line-clamp-3">
+                    {note.note}
+                  </p>
+
+                </div>
+
+              </div>
+
+            </motion.div>
+
+          ))}
+
+        </div>
+
+        {/* PUBLIC NOTES */}
+
+        <div className="my-16">
+
+          <h2 className="text-2xl font-semibold mb-6">
+            All Public Notes
+          </h2>
+
+          {allNotes.length === 0 && (
+            <div className="text-gray-400">
+              No public notes available
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-3 gap-8">
+
+            {allNotes.map((note, i) => (
+
+              <motion.div
+                key={note._id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => router.push(`/public-note/${note._id}`)}
+                className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition cursor-pointer"
+              >
+
+                <div className="w-full h-44 overflow-hidden">
+
+                  {note?.images?.length > 0 ? (
+
+                    <img
+                      src={note.images[0].imageBase}
+                      className="w-full h-full object-cover"
+                    />
+
+                  ) : (
+
+                    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                      <ImageIcon size={28} />
+                    </div>
+
+                  )}
+
+                </div>
+
+                <div className="p-5">
+
+                  <h4 className="text-lg font-semibold mb-1">
+                    By: {note.user?.name}
+                  </h4>
+
+                  <h3 className="text-gray-300 font-semibold mb-1">
+                    {note.title}
+                  </h3>
+
+                  <p className="text-gray-400 text-sm line-clamp-3">
+                    {note.note}
+                  </p>
+
+                </div>
+
+              </motion.div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* DELETE MODAL */}
+
+      {deleteModal && (
+
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+
+          <div className="bg-gray-900 p-6 rounded-xl w-80 border border-gray-700">
+
+            <h2 className="text-lg font-semibold mb-4">
+              Delete Note
+            </h2>
+
+            <p className="text-gray-400 text-sm mb-6">
+              Are you sure you want to delete this note?
+            </p>
+
+            <div className="flex justify-end gap-3">
+
+              <button
+                onClick={() => setDeleteModal(null)}
+                className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => deleteNote(deleteModal)}
+                className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </PageWrapper>
+
+
+  );
+
+}
