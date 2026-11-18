@@ -20,16 +20,14 @@ import {
   X,
   ArrowUpRight,
   Menu,
-  
-  Settings,
-  User,
-  ChevronRight,
+
 } from "lucide-react";
 import { motion } from "framer-motion";
 import PageWrapper from "@/components/PageWrapper";
 import CircularProgress from "@mui/material/CircularProgress";
 import { setUser } from "@/redux/userSlice";
 import SidebarNavigation from "@/components/SidebarNavigation";
+import toast from "react-hot-toast";
 
 export default function () {
   const router = useRouter();
@@ -131,13 +129,29 @@ export default function () {
   };
 
   // LOGOUT
-  const handleLogout = () => {
-    document.cookie =
-      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+ 
+const handleLogout = async () => {
+  try {
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+    });
 
-    dispatch(setUser(null));
-    router.replace("/auth");
-  };
+    if (res.ok) {
+      dispatch(setUser(null));
+
+      toast.success("Logged out successfully");
+
+      router.replace("/auth");
+      router.refresh();
+    } else {
+      toast.error("Logout failed");
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    toast.error("Something went wrong");
+  }
+};
+
 
   // SEARCH
   const filteredMyNotes = myNotes.filter((note) =>
