@@ -89,6 +89,15 @@ export default function Login() {
     }
   };
 
+  const handleGoogleError = () => {
+    toast.error(
+      "Google login failed. Please allow popups and disable Enhanced Tracking Protection for this website in Firefox.",
+      {
+        duration: 7000,
+      }
+    );
+  };
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
 
@@ -157,20 +166,20 @@ export default function Login() {
           </div>
 
           {/* Google Login */}
+
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => {
-                toast.error("Google login failed. Please try again.");
-              }}
-              useOneTap={false}
+              onError={handleGoogleError}
               ux_mode="popup"
+              useOneTap={false}
               theme="filled_black"
               shape="rectangular"
               text="continue_with"
               width="350"
             />
           </div>
+
 
           <p className="text-center text-gray-400 mt-6 text-sm">
             Don't have an account?{" "}
