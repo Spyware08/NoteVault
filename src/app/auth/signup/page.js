@@ -1,15 +1,26 @@
+
 "use client";
 
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, UserPlus } from "lucide-react";
+
+import {
+  User,
+  Mail,
+  Lock,
+  UserPlus,
+  ArrowLeft,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+
 import Link from "next/link";
 import { motion } from "framer-motion";
 import AuthLeftPanel from "@/components/auth/AuthLeftPanel";
 
 export default function Signup() {
-
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -18,124 +29,335 @@ export default function Signup() {
     password: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // FORM CHANGE
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
   };
 
+  // SIGNUP API
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
-    const loadingToast = toast.loading("Please wait...");
+    if (loading) return;
 
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
+    const loadingToast = toast.loading("Creating your account...");
+    setLoading(true);
 
-    const data = await res.json();
-    toast.dismiss(loadingToast);
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
 
-    if (res.status === 201) {
+      const data = await res.json();
 
-      toast.success("Account created 🎉");
+      if (res.status === 201) {
+        toast.success("Account created successfully!");
 
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 800);
-
-    } else {
-      toast.error(data?.message || "Signup failed");
+        setTimeout(() => {
+          router.push("/auth/login");
+        }, 800);
+      } else {
+        toast.error(data?.message || "Signup failed");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      toast.dismiss(loadingToast);
+      setLoading(false);
     }
-
   };
 
   return (
+    <main className="min-h-screen bg-[#171819] text-white">
 
-    <div className="min-h-screen grid lg:grid-cols-2 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
+      {/* ================= HEADER ================= */}
 
-      {/* LEFT PANEL */}
-      <AuthLeftPanel
-        title="Join NoteVault"
-        subtitle="Create your account and start saving your notes securely."
-      />
+      <header className="relative z-20 flex h-[76px] items-center justify-between border-b border-[#383A3B] bg-[#1C1E1F] px-5 sm:px-10 lg:px-14">
 
-      {/* RIGHT FORM */}
-      <div className="flex items-center justify-center px-6">
-
-        <motion.form
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          onSubmit={handleSubmit}
-          className="bg-white/5 backdrop-blur border border-white/10 p-8 rounded-2xl w-full max-w-md"
+        {/* LOGO LEFT */}
+        <Link
+          href="/"
+          className="flex items-center gap-3"
         >
 
-          <h2 className="text-3xl font-bold text-center mb-6">
-            Signup
-          </h2>
-
-          {/* Name */}
-          <div className="relative mb-4">
-            <User className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Full Name"
-              className="w-full pl-10 py-2 bg-gray-800 border border-gray-700 rounded-lg"
-              required
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#A66A35]/40 bg-[#33291F]">
+            <img
+              src="/icon.png"
+              alt="NoteVault"
+              className="h-9 w-9 object-contain"
             />
           </div>
 
-          {/* Email */}
-          <div className="relative mb-4">
-            <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="Email"
-              className="w-full pl-10 py-2 bg-gray-800 border border-gray-700 rounded-lg"
-              required
+          <span className="text-2xl font-extrabold tracking-tight">
+            Note<span className="text-[#E88A35]">Vault</span>
+          </span>
+
+        </Link>
+
+        {/* BACK BUTTON RIGHT */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-lg border border-[#414141] bg-[#252728] px-4 py-2.5 text-sm font-medium text-gray-300 transition hover:border-[#E88A35] hover:text-[#F59B45]"
+        >
+          <ArrowLeft size={16} />
+          Back to Home
+        </Link>
+
+      </header>
+
+      {/* ================= MAIN CONTENT ================= */}
+
+      <section className="grid min-h-[calc(100vh-76px)] grid-cols-1 lg:grid-cols-2">
+
+        {/* LEFT PANEL */}
+        <div className="hidden items-center justify-center border-r border-[#383A3B] px-8 py-10 lg:flex xl:px-16">
+
+          <div className="w-full max-w-xl">
+            <AuthLeftPanel
+              title="Join NoteVault"
+              subtitle="Create your account and start saving your notes securely."
             />
           </div>
 
-          {/* Password */}
-          <div className="relative mb-6">
-            <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Password"
-              className="w-full pl-10 py-2 bg-gray-800 border border-gray-700 rounded-lg"
-              required
-            />
-          </div>
+        </div>
 
-          <button
-            type="submit"
-            className="w-full flex justify-center gap-2 bg-green-600 py-2 rounded-lg hover:bg-green-700 transition"
+        {/* RIGHT PANEL */}
+        <div className="relative flex items-center justify-center overflow-hidden px-5 py-12 sm:px-8 lg:px-10">
+
+          {/* BACKGROUND GLOW */}
+          <div className="pointer-events-none absolute -right-40 top-10 h-96 w-96 rounded-full bg-[#E88A35]/[0.05] blur-[130px]" />
+
+          <div className="pointer-events-none absolute -left-40 bottom-0 h-80 w-80 rounded-full bg-[#E88A35]/[0.04] blur-[120px]" />
+
+          {/* SIGNUP CARD */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="relative z-10 w-full max-w-md"
           >
-            <UserPlus size={18} />
-            Signup
-          </button>
 
-          <p className="text-center text-gray-400 mt-6 text-sm">
-            Already have an account?{" "}
-            <Link href="/auth/login" className="text-green-400">
-              Login
-            </Link>
-          </p>
+            <div className="overflow-hidden rounded-2xl border border-[#383A3B] bg-[#202223] shadow-2xl shadow-black/30">
 
-        </motion.form>
+              {/* CARD HEADER */}
+              <div className="border-b border-[#383A3B] bg-[#252728] px-7 py-7 text-center">
 
-      </div>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl border border-[#A66A35]/40 bg-[#33291F]">
 
-    </div>
+                  <img
+                    src="/icon.png"
+                    alt="NoteVault"
+                    className="h-12 w-12 object-contain"
+                  />
+
+                </div>
+
+                <h1 className="text-3xl font-extrabold">
+                  Create Your{" "}
+                  <span className="text-[#E88A35]">
+                    Account
+                  </span>
+                </h1>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  Join NoteVault and organize your thoughts.
+                </p>
+
+              </div>
+
+              {/* FORM */}
+              <div className="p-6 sm:p-8">
+
+                <form
+                  onSubmit={handleSubmit}
+                  className="space-y-5"
+                >
+
+                  {/* NAME */}
+                  <div>
+
+                    <label className="mb-2 block text-sm font-semibold text-gray-300">
+                      Full Name
+                    </label>
+
+                    <div className="relative">
+
+                      <User
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#E88A35]"
+                        size={18}
+                      />
+
+                      <input
+                        name="name"
+                        type="text"
+                        value={form.name}
+                        onChange={handleChange}
+                        placeholder="Enter your full name"
+                        required
+                        autoComplete="name"
+                        className="w-full rounded-lg border border-[#414141] bg-[#252728] py-3.5 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-[#E88A35] focus:ring-2 focus:ring-[#E88A35]/10"
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* EMAIL */}
+                  <div>
+
+                    <label className="mb-2 block text-sm font-semibold text-gray-300">
+                      Email Address
+                    </label>
+
+                    <div className="relative">
+
+                      <Mail
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#E88A35]"
+                        size={18}
+                      />
+
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        placeholder="Enter your email"
+                        required
+                        autoComplete="email"
+                        className="w-full rounded-lg border border-[#414141] bg-[#252728] py-3.5 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-[#E88A35] focus:ring-2 focus:ring-[#E88A35]/10"
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* PASSWORD */}
+                  <div>
+
+                    <label className="mb-2 block text-sm font-semibold text-gray-300">
+                      Password
+                    </label>
+
+                    <div className="relative">
+
+                      <Lock
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#E88A35]"
+                        size={18}
+                      />
+
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        placeholder="Create a password"
+                        required
+                        autoComplete="new-password"
+                        className="w-full rounded-lg border border-[#414141] bg-[#252728] py-3.5 pl-12 pr-12 text-sm text-white outline-none transition placeholder:text-gray-600 focus:border-[#E88A35] focus:ring-2 focus:ring-[#E88A35]/10"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPassword(!showPassword)
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-[#F59B45]"
+                        aria-label={
+                          showPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                      >
+
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  {/* SIGNUP BUTTON */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#E88A35] py-3.5 text-sm font-bold text-[#171717] transition hover:bg-[#F59B45] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+
+                    {loading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#171717]/30 border-t-[#171717]" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus size={19} />
+                        Create NoteVault Account
+                      </>
+                    )}
+
+                  </button>
+
+                </form>
+
+                {/* LOGIN LINK */}
+                <p className="mt-7 text-center text-sm text-gray-500">
+
+                  Already have an account?{" "}
+
+                  <Link
+                    href="/auth/login"
+                    className="font-bold text-[#E88A35] transition hover:text-[#F59B45]"
+                  >
+                    Login
+                  </Link>
+
+                </p>
+
+              </div>
+
+              {/* CARD FOOTER */}
+              <div className="flex items-center justify-center gap-2 border-t border-[#383A3B] bg-[#252728] px-5 py-4">
+
+                <ShieldCheck
+                  size={15}
+                  className="text-[#E88A35]"
+                />
+
+                <span className="text-xs text-gray-500">
+                  Your personal workspace, protected.
+                </span>
+
+              </div>
+
+            </div>
+
+            {/* COPYRIGHT */}
+            <p className="mt-5 text-center text-xs text-gray-600">
+              © {new Date().getFullYear()} NoteVault. All rights reserved.
+            </p>
+
+          </motion.div>
+
+        </div>
+
+      </section>
+
+    </main>
   );
 }

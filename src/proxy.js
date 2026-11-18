@@ -21,7 +21,7 @@ export function proxy(request) {
   // No token: redirect to login
   if (!token) {
     return NextResponse.redirect(
-      new URL("/auth/login", request.url)
+      new URL("/auth", request.url)
     );
   }
 
