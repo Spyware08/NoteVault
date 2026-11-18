@@ -91,7 +91,7 @@ export default function Login() {
 
   const handleGoogleError = () => {
     toast.error(
-      "Google login failed. Please allow popups and disable Enhanced Tracking Protection for this website in Firefox.",
+      "Google login failed. Please allow popups and disable Enhanced Tracking Protection for this website.",
       {
         duration: 7000,
       }
