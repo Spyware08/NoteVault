@@ -160,7 +160,11 @@ export default function Login() {
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => toast.error("Google login failed")}
+              onError={() => {
+                toast.error("Google login failed. Please try again.");
+              }}
+              useOneTap={false}
+              ux_mode="popup"
               theme="filled_black"
               shape="rectangular"
               text="continue_with"
