@@ -129,28 +129,28 @@ export default function () {
   };
 
   // LOGOUT
- 
-const handleLogout = async () => {
-  try {
-    const res = await fetch("/api/auth/logout", {
-      method: "POST",
-    });
 
-    if (res.ok) {
-      dispatch(setUser(null));
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
 
-      toast.success("Logged out successfully");
+      if (res.ok) {
+        dispatch(setUser(null));
 
-      router.replace("/auth");
-      router.refresh();
-    } else {
-      toast.error("Logout failed");
+        toast.success("Logged out successfully");
+
+        router.replace("/auth");
+        router.refresh();
+      } else {
+        toast.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Something went wrong");
     }
-  } catch (error) {
-    console.error("Logout error:", error);
-    toast.error("Something went wrong");
-  }
-};
+  };
 
 
   // SEARCH
@@ -414,7 +414,7 @@ const handleLogout = async () => {
           Menu
         </p>
 
-       < SidebarNavigation />
+        < SidebarNavigation />
         {/* <div className="mb-3 mt-9 px-3 text-[10px] font-bold uppercase tracking-[2px] text-gray-600">
           Account
         </div>
@@ -700,9 +700,11 @@ const handleLogout = async () => {
 
                 </div>
 
-                <div className="p-5">
 
-                  {filteredMyNotes.length === 0 ? (
+                {filteredMyNotes.length === 0 ?
+                  search &&
+                  <div className="p-5">
+
                     <div className="rounded-md border border-dashed border-[#484848] bg-[#242627] px-5 py-14 text-center">
 
                       <FileText
@@ -711,212 +713,208 @@ const handleLogout = async () => {
                       />
 
                       <h3 className="font-bold text-white">
-                        {search
-                          ? "No matching notes"
-                          : "No notes found"}
+
+                        "No matching notes"
+
                       </h3>
 
                       <p className="mt-2 text-sm text-gray-500">
-                        {search
-                          ? "Try a different search keyword."
-                          : "Create your first note to get started."}
+                        "Try a different search keyword."
+
                       </p>
 
-                      {!search && (
-                        <button
-                          onClick={() =>
-                            router.push("/add-note")
-                          }
-                          className="mt-5 rounded-md bg-[#E88A35] px-5 py-2.5 text-sm font-bold text-[#171717] hover:bg-[#F59B45]"
-                        >
-                          Create Note
-                        </button>
-                      )}
 
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                      {filteredMyNotes.map((note, index) => (
-                        <NoteCard
-                          key={note._id}
-                          note={note}
-                          index={index}
-                        />
-                      ))}
-                    </div>
-                  )}
 
-                </div>
-              </section>
-
-              {/* PUBLIC NOTES */}
-              <section
-                id="public-notes"
-                className="mb-10 scroll-mt-24 overflow-hidden rounded-lg border border-[#383A3B] bg-[#202223]"
-              >
-
-                <div className="flex items-center justify-between border-b border-[#383A3B] bg-[#252728] px-5 py-4">
-
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-md bg-[#392C20] p-2">
-                      <Globe
-                        size={18}
-                        className="text-[#F59B45]"
-                      />
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold text-white">
-                        Explore Public Notes
-                      </h3>
-
-                      <p className="text-[11px] text-gray-500">
-                        Discover content shared by other users
-                      </p>
                     </div>
                   </div>
 
-                  <span className="rounded-md border border-[#A66A35]/40 bg-[#392C20] px-3 py-1.5 text-xs font-semibold text-[#F59B45]">
-                    {filteredPublicNotes.length} Notes
-                  </span>
-
-                </div>
-
-                <div className="p-5">
-
-                  {filteredPublicNotes.length === 0 ? (
-                    <div className="rounded-md border border-dashed border-[#484848] bg-[#242627] px-5 py-12 text-center">
-
-                      <Globe
-                        size={36}
-                        className="mx-auto mb-3 text-[#A66A35]"
-                      />
-
-                      <h3 className="font-bold text-white">
-                        No public notes available
-                      </h3>
-
-                      <p className="mt-2 text-sm text-gray-500">
-                        Public notes from other users will appear here.
-                      </p>
-
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                      {filteredPublicNotes.map((note, index) => (
-                        <NoteCard
-                          key={note._id}
-                          note={note}
-                          index={index}
-                          isPublic={true}
-                        />
-                      ))}
+                  : (
+                    <div className="p-5">
+                      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                        {filteredMyNotes.map((note, index) => (
+                          <NoteCard
+                            key={note._id}
+                            note={note}
+                            index={index}
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
 
+       
+          </section>
+
+          {/* PUBLIC NOTES */}
+          <section
+            id="public-notes"
+            className="mb-10 scroll-mt-24 overflow-hidden rounded-lg border border-[#383A3B] bg-[#202223]"
+          >
+
+            <div className="flex items-center justify-between border-b border-[#383A3B] bg-[#252728] px-5 py-4">
+
+              <div className="flex items-center gap-3">
+                <div className="rounded-md bg-[#392C20] p-2">
+                  <Globe
+                    size={18}
+                    className="text-[#F59B45]"
+                  />
                 </div>
-              </section>
 
-              {/* FOOTER */}
-              <footer className="mt-12 border-t border-[#383A3B] pt-6 pb-5">
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Explore Public Notes
+                  </h3>
 
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="/icon.png"
-                      alt="NoteVault"
-                      className="h-6 w-6 object-contain"
-                    />
-
-                    <span className="text-sm font-bold text-gray-400">
-                      Note<span className="text-[#E88A35]">Vault</span>
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-gray-600">
-                    Organize your thoughts. Save your ideas.
+                  <p className="text-[11px] text-gray-500">
+                    Discover content shared by other users
                   </p>
-
-                  <span className="text-xs text-gray-600">
-                    Built with Next.js ⚡
-                  </span>
-
                 </div>
+              </div>
 
-              </footer>
+              <span className="rounded-md border border-[#A66A35]/40 bg-[#392C20] px-3 py-1.5 text-xs font-semibold text-[#F59B45]">
+                {filteredPublicNotes.length} Notes
+              </span>
 
             </div>
-          </div>
-        </div>
 
-        {/* DELETE MODAL */}
-        {deleteModal && (
-          <div
-            onClick={() => setDeleteModal(null)}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{
-                opacity: 0,
-                scale: 0.9,
-                y: 15,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                y: 0,
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-xl border border-[#414141] bg-[#242627] p-6 shadow-2xl"
-            >
+            <div className="p-5">
 
-              <div className="mb-5 flex items-center justify-between">
+              {filteredPublicNotes.length === 0 ? (
+                <div className="rounded-md border border-dashed border-[#484848] bg-[#242627] px-5 py-12 text-center">
 
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-400">
-                  <Trash2 size={23} />
+                  <Globe
+                    size={36}
+                    className="mx-auto mb-3 text-[#A66A35]"
+                  />
+
+                  <h3 className="font-bold text-white">
+                    No public notes available
+                  </h3>
+
+                  <p className="mt-2 text-sm text-gray-500">
+                    Public notes from other users will appear here.
+                  </p>
+
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredPublicNotes.map((note, index) => (
+                    <NoteCard
+                      key={note._id}
+                      note={note}
+                      index={index}
+                      isPublic={true}
+                    />
+                  ))}
+                </div>
+              )}
 
-                <button
-                  onClick={() => setDeleteModal(null)}
-                  className="rounded-lg p-2 text-gray-400 transition hover:bg-[#383A3B] hover:text-white"
-                >
-                  <X size={20} />
-                </button>
+            </div>
+          </section>
 
+          {/* FOOTER */}
+          <footer className="mt-12 border-t border-[#383A3B] pt-6 pb-5">
+
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
+              <div className="flex items-center gap-2">
+                <img
+                  src="/icon.png"
+                  alt="NoteVault"
+                  className="h-6 w-6 object-contain"
+                />
+
+                <span className="text-sm font-bold text-gray-400">
+                  Note<span className="text-[#E88A35]">Vault</span>
+                </span>
               </div>
 
-              <h2 className="text-xl font-bold text-white">
-                Delete Note?
-              </h2>
-
-              <p className="mt-2 text-sm leading-6 text-gray-400">
-                Are you sure you want to delete this note?
-                This action cannot be undone.
+              <p className="text-xs text-gray-600">
+                Organize your thoughts. Save your ideas.
               </p>
 
-              <div className="mt-7 flex justify-end gap-3">
+              <span className="text-xs text-gray-600">
+                Built with Next.js ⚡
+              </span>
 
-                <button
-                  onClick={() => setDeleteModal(null)}
-                  className="rounded-md border border-[#484848] px-5 py-2.5 text-sm font-semibold text-gray-300 transition hover:bg-[#383A3B]"
-                >
-                  Cancel
-                </button>
+            </div>
 
-                <button
-                  onClick={() => deleteNote(deleteModal)}
-                  className="rounded-md bg-red-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-red-600"
-                >
-                  Delete
-                </button>
+          </footer>
 
-              </div>
-            </motion.div>
+        </div>
+      </div>
+    </div>
+
+        {/* DELETE MODAL */ }
+  {
+    deleteModal && (
+      <div
+        onClick={() => setDeleteModal(null)}
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
+      >
+        <motion.div
+          initial={{
+            opacity: 0,
+            scale: 0.9,
+            y: 15,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            y: 0,
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-sm rounded-xl border border-[#414141] bg-[#242627] p-6 shadow-2xl"
+        >
+
+          <div className="mb-5 flex items-center justify-between">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-400">
+              <Trash2 size={23} />
+            </div>
+
+            <button
+              onClick={() => setDeleteModal(null)}
+              className="rounded-lg p-2 text-gray-400 transition hover:bg-[#383A3B] hover:text-white"
+            >
+              <X size={20} />
+            </button>
+
           </div>
-        )}
 
-      </main>
-    </PageWrapper>
+          <h2 className="text-xl font-bold text-white">
+            Delete Note?
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-gray-400">
+            Are you sure you want to delete this note?
+            This action cannot be undone.
+          </p>
+
+          <div className="mt-7 flex justify-end gap-3">
+
+            <button
+              onClick={() => setDeleteModal(null)}
+              className="rounded-md border border-[#484848] px-5 py-2.5 text-sm font-semibold text-gray-300 transition hover:bg-[#383A3B]"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={() => deleteNote(deleteModal)}
+              className="rounded-md bg-red-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-red-600"
+            >
+              Delete
+            </button>
+
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
+
+      </main >
+    </PageWrapper >
   );
 }
