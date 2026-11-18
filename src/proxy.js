@@ -1,35 +1,50 @@
+
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = "my_super_secret_jwt_key_12345";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export function proxy(request) {
-
   const token = request.cookies.get("token")?.value;
   const { pathname } = request.nextUrl;
 
-  // allow auth pages
+  // Allow authentication pages
   if (pathname.startsWith("/auth")) {
     return NextResponse.next();
   }
 
-  // allow API routes
+  // Allow API routes
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
 
-  // if no token → redirect to login
+  // No token: redirect to login
   if (!token) {
-    return NextResponse.redirect(new URL("/auth", request.url));
+    return NextResponse.redirect(
+      new URL("/auth/login", request.url)
+    );
   }
 
   try {
-    jwt.verify(token, JWT_SECRET);
-    return NextResponse.next();
-  } catch {
-    return NextResponse.redirect(new URL("/auth", request.url));
-  }
+    if (!JWT_SECRET) {
+      throw new Error("JWT_SECRET is missing");
+    }
 
+    jwt.verify(token, JWT_SECRET);
+
+    return NextResponse.next();
+
+  } catch (error) {
+    console.error("JWT verification failed:", error.message);
+
+    const response = NextResponse.redirect(
+      new URL("/auth/login", request.url)
+    );
+
+    response.cookies.delete("token");
+
+    return response;
+  }
 }
 
 export const config = {

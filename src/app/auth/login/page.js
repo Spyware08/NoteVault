@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,10 +9,10 @@ import { setUser } from "@/redux/userSlice";
 import { Mail, Lock, LogIn } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { GoogleLogin } from "@react-oauth/google";
 import AuthLeftPanel from "@/components/auth/AuthLeftPanel";
 
 export default function Login() {
-
   const router = useRouter();
   const dispatch = useDispatch();
 
@@ -24,38 +25,71 @@ export default function Login() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Normal Email/Password Login
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     const loadingToast = toast.loading("Please wait...");
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    const data = await res.json();
-    toast.dismiss(loadingToast);
+      const data = await res.json();
 
-    if (res.status === 200) {
+      if (res.ok) {
+        dispatch(setUser(data.user));
+        toast.success("Login successful");
+        router.replace("/");
+      } else {
+        toast.error(data?.message || "Login failed");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    } finally {
+      toast.dismiss(loadingToast);
+    }
+  };
+
+  // Google Login
+  const handleGoogleSuccess = async (credentialResponse) => {
+    const loadingToast = toast.loading("Verifying Google account...");
+
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data?.message || "Google login failed");
+        return;
+      }
 
       dispatch(setUser(data.user));
-      toast.success("Login successful");
 
-      setTimeout(() => {
-        router.replace("/");
-      }, 500);
+      toast.success("Google login successful!");
 
-    } else {
-      toast.error(data?.message);
+      router.replace("/");
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast.error("Something went wrong with Google login");
+    } finally {
+      toast.dismiss(loadingToast);
     }
-
   };
 
   return (
-
     <div className="min-h-screen grid lg:grid-cols-2 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
 
       <AuthLeftPanel />
@@ -74,32 +108,65 @@ export default function Login() {
           </h2>
 
           <div className="relative mb-4">
-            <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+            <Mail
+              className="absolute left-3 top-3 text-gray-400"
+              size={18}
+            />
+
             <input
               name="email"
+              type="email"
               value={form.email}
               onChange={handleChange}
               placeholder="Email"
+              required
               className="w-full pl-10 py-2 bg-gray-800 border border-gray-700 rounded-lg"
             />
           </div>
 
           <div className="relative mb-6">
-            <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+            <Lock
+              className="absolute left-3 top-3 text-gray-400"
+              size={18}
+            />
+
             <input
               type="password"
               name="password"
               value={form.password}
               onChange={handleChange}
               placeholder="Password"
+              required
               className="w-full pl-10 py-2 bg-gray-800 border border-gray-700 rounded-lg"
             />
           </div>
 
-          <button className="w-full flex justify-center gap-2 bg-blue-600 py-2 rounded-lg hover:bg-blue-700">
+          <button
+            type="submit"
+            className="w-full flex justify-center gap-2 bg-blue-600 py-2 rounded-lg hover:bg-blue-700"
+          >
             <LogIn size={18} />
             Login
           </button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 border-t border-gray-700" />
+            <span className="text-gray-400 text-sm">OR</span>
+            <div className="flex-1 border-t border-gray-700" />
+          </div>
+
+          {/* Google Login */}
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error("Google login failed")}
+              theme="filled_black"
+              shape="rectangular"
+              text="continue_with"
+              width="350"
+            />
+          </div>
 
           <p className="text-center text-gray-400 mt-6 text-sm">
             Don't have an account?{" "}
@@ -111,7 +178,6 @@ export default function Login() {
         </motion.form>
 
       </div>
-
     </div>
   );
 }
